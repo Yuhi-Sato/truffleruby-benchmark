@@ -1,8 +1,12 @@
 # TruffleRuby (GraalVM-based Ruby implementation).
 #
-# We use the official truffleruby image. The "stable" tag tracks the latest
-# stable release; pin to a specific tag (e.g. 24.1.2) for reproducible runs.
-FROM ghcr.io/oracle/truffleruby:stable
+# The official image lives at ghcr.io/graalvm/truffleruby. We default to the
+# docker-hub-mirrored flavorjones/truffleruby because ghcr.io is unreachable
+# from some networks. Override TRUFFLERUBY_IMAGE at build time to switch:
+#   docker build --build-arg TRUFFLERUBY_IMAGE=ghcr.io/graalvm/truffleruby:24.1.2 \
+#       -f docker/Dockerfile.truffleruby -t ruby-bench-truffleruby .
+ARG TRUFFLERUBY_IMAGE=flavorjones/truffleruby:latest
+FROM ${TRUFFLERUBY_IMAGE}
 
 WORKDIR /bench
 COPY benchmarks /bench/benchmarks
