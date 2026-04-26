@@ -1,0 +1,106 @@
+# The Computer Language Benchmarks Game
+# https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
+#
+# ported by Michael Neumann from the Christoph Bauer's C program.
+# modified by Jesse Millikan
+# modified by Yusuke Endoh
+#
+# Adapted from Shopify/yjit-bench.
+
+require_relative "harness"
+
+SOLAR_MASS = 4 * Math::PI**2
+DAYS_PER_YEAR = 365.24
+
+class Planet
+  attr_accessor :x, :y, :z, :vx, :vy, :vz, :mass
+
+  def initialize(x, y, z, vx, vy, vz, mass)
+    @x, @y, @z = x, y, z
+    @vx = vx * DAYS_PER_YEAR
+    @vy = vy * DAYS_PER_YEAR
+    @vz = vz * DAYS_PER_YEAR
+    @mass = mass * SOLAR_MASS
+  end
+
+  def move_from_i(bodies, nbodies, dt, i)
+    while i < nbodies
+      b2 = bodies[i]
+      dx = @x - b2.x
+      dy = @y - b2.y
+      dz = @z - b2.z
+
+      dsq = dx * dx + dy * dy + dz * dz
+      mag = dt / (dsq * Math.sqrt(dsq))
+      b_mass_mag  = @mass  * mag
+      b2_mass_mag = b2.mass * mag
+
+      @vx -= dx * b2_mass_mag
+      @vy -= dy * b2_mass_mag
+      @vz -= dz * b2_mass_mag
+      b2.add_v(dx * b_mass_mag, dy * b_mass_mag, dz * b_mass_mag)
+      i += 1
+    end
+
+    @x += dt * @vx
+    @y += dt * @vy
+    @z += dt * @vz
+  end
+
+  def add_v(dx, dy, dz)
+    @vx += dx
+    @vy += dy
+    @vz += dz
+  end
+end
+
+def offset_momentum(bodies)
+  px = py = pz = 0.0
+  bodies.each do |b|
+    m = b.mass
+    px += b.vx * m
+    py += b.vy * m
+    pz += b.vz * m
+  end
+  b = bodies[0]
+  b.vx = -px / SOLAR_MASS
+  b.vy = -py / SOLAR_MASS
+  b.vz = -pz / SOLAR_MASS
+end
+
+BODIES = [
+  Planet.new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+  Planet.new(
+    4.84143144246472090e+00, -1.16032004402742839e+00, -1.03622044471123109e-01,
+    1.66007664274403694e-03,  7.69901118419740425e-03, -6.90460016972063023e-05,
+    9.54791938424326609e-04),
+  Planet.new(
+    8.34336671824457987e+00,  4.12479856412430479e+00, -4.03523417114321381e-01,
+    -2.76742510726862411e-03, 4.99852801234917238e-03,  2.30417297573763929e-05,
+    2.85885980666130812e-04),
+  Planet.new(
+    1.28943695621391310e+01, -1.51111514016986312e+01, -2.23307578892655734e-01,
+    2.96460137564761618e-03,  2.37847173959480950e-03, -2.96589568540237556e-05,
+    4.36624404335156298e-05),
+  Planet.new(
+    1.53796971148509165e+01, -2.59193146099879641e+01,  1.79258772950371181e-01,
+    2.68067772490389322e-03,  1.62824170038242295e-03, -9.51592254519715870e-05,
+    5.15138902046611451e-05),
+]
+
+offset_momentum(BODIES)
+
+N = 20_000
+NBODIES = BODIES.size
+DT = 0.01
+
+run_benchmark do
+  N.times do
+    i = 0
+    while i < NBODIES
+      b = BODIES[i]
+      b.move_from_i(BODIES, NBODIES, DT, i + 1)
+      i += 1
+    end
+  end
+end

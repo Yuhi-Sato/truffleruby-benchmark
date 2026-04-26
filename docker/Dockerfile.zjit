@@ -1,0 +1,13 @@
+# Ruby 4.0.2 with the experimental ZJIT enabled.
+#
+# ZJIT is the new Rust-based method-JIT introduced in Ruby 4.0. It is shipped
+# in the official ruby:4.0.2 image and enabled via --zjit.
+FROM ruby:4.0.2-slim
+
+WORKDIR /bench
+COPY benchmarks /bench/benchmarks
+
+# Disable YJIT explicitly so the two JITs don't fight, then enable ZJIT.
+ENV RUBYOPT="--zjit"
+
+CMD ["ruby", "--zjit", "-e", "puts RUBY_DESCRIPTION; p RubyVM::ZJIT.enabled? if defined?(RubyVM::ZJIT)"]

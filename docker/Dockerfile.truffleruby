@@ -1,0 +1,14 @@
+# TruffleRuby (GraalVM-based Ruby implementation).
+#
+# We use the official truffleruby image. The "stable" tag tracks the latest
+# stable release; pin to a specific tag (e.g. 24.1.2) for reproducible runs.
+FROM ghcr.io/oracle/truffleruby:stable
+
+WORKDIR /bench
+COPY benchmarks /bench/benchmarks
+
+# TruffleRuby Native by default; uncomment to switch to the JVM backend, which
+# warms up slower but tends to peak higher on long-running workloads.
+# ENV TRUFFLERUBYOPT="--jvm"
+
+CMD ["ruby", "-e", "puts RUBY_DESCRIPTION"]
